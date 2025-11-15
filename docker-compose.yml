@@ -1,0 +1,52 @@
+services:
+  app:
+    build: .
+    container_name: bank-app
+    env_file:
+      - .env
+    ports:
+      - "8008:8008"
+    depends_on:
+      - mysql
+    networks:
+      bank-net:
+
+
+  mysql:
+    image: mysql
+    container_name: bank-mysql
+    restart: always
+    env_file:
+      - .env
+    networks:
+      bank-net:
+    ports:
+      - "3307:3306"
+    volumes:
+      - bank_data:/var/lib/mysql
+
+  pgadmin:
+    container_name: bank_pgadmin
+    image: dpage/pgadmin4
+    ports:
+      - "7001:80"
+    restart: always
+    depends_on:
+      - mysql
+    env_file:
+      - .env
+    volumes:
+      - bank_pgadmin_data:/var/lib/pgadmin
+    networks:
+      bank-net:
+
+
+
+networks:
+  bank-net:
+    driver: bridge
+volumes:
+  bank_data:
+  bank_pgadmin_data:
+
+
