@@ -3,20 +3,28 @@ package com.sylvester.bank.service;
 import com.sylvester.bank.config.JwtTokenProvider;
 import com.sylvester.bank.dto.*;
 import com.sylvester.bank.entity.Role;
+import com.sylvester.bank.entity.Token;
 import com.sylvester.bank.entity.User;
+import com.sylvester.bank.repository.TokenRepository;
 import com.sylvester.bank.repository.UserRepository;
 import com.sylvester.bank.utils.AccountUtils;
+import jakarta.persistence.EntityNotFoundException;
 import lombok.AllArgsConstructor;
-import org.springdoc.core.service.SecurityService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
-import java.util.Objects;
+import java.util.HashMap;
+import java.util.Map;
 
 @Service
 @AllArgsConstructor
@@ -37,6 +45,9 @@ public class UserServiceImpl implements UserService {
 
     @Autowired
     AuthenticationManager authenticationManager;
+
+    @Autowired
+    TokenRepository tokenRepository;
 
     @Autowired
     JwtTokenProvider jwtTokenProvider;
@@ -88,22 +99,7 @@ public class UserServiceImpl implements UserService {
 
     }
 
-    public BankResponse login(LoginDto loginDto) {
-        Authentication authentication = null;
-        authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(loginDto.getEmail(), loginDto.getPassword())
-        );
-        EmailDetails loginAlert = EmailDetails.builder()
-                .subject("You're logged in")
-                .recipient(loginDto.getEmail())
-                .messageBody("You logged into your account. If you didn't initiate this request, please contact your bank")
-                .build();
-        emailService.sendEmailAlert(loginAlert);
-        return BankResponse.builder()
-                .responseCode("Login Success")
-                .responseMessage(jwtTokenProvider.generateToken(authentication))
-                .build();
-    }
+
 
     @Override
     public BankResponse balanceEnquiry(EnquiryRequest enquiryRequest) {
@@ -288,4 +284,13 @@ public class UserServiceImpl implements UserService {
                 .accountInfo(null)
                 .build();
     }
+
+    @Override
+    public User getUserByEmail(String email) {
+        return userRepository.findByEmail(email).orElseThrow(
+                () -> new EntityNotFoundException("User with email " + email + " not found")
+        );
+    }
+
+
 }

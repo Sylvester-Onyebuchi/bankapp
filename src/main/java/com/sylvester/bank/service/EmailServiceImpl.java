@@ -11,6 +11,7 @@ import org.springframework.mail.MailException;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import java.io.File;
@@ -24,6 +25,7 @@ public class EmailServiceImpl implements EmailService {
     private String senderEmail;
 
     @Override
+    @Async
     public void sendEmailAlert(EmailDetails emailDetails) {
         try{
             SimpleMailMessage message = new SimpleMailMessage();
@@ -41,6 +43,7 @@ public class EmailServiceImpl implements EmailService {
     }
 
     @Override
+    @Async
     public void sendEmailWithAttachment(EmailDetails emailDetails) {
         MimeMessage mimMessage = javaSender.createMimeMessage();
         MimeMessageHelper mimeMessageHelper;

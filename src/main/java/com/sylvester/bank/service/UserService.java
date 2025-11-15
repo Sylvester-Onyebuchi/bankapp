@@ -1,6 +1,7 @@
 package com.sylvester.bank.service;
 
 import com.sylvester.bank.dto.*;
+import com.sylvester.bank.entity.User;
 
 public interface UserService {
     BankResponse createAccount(UserRequest userRequest);
@@ -9,5 +10,6 @@ public interface UserService {
     BankResponse creditAccount(CreditAndDebitRequest creditAndDebitRequest);
     BankResponse debitAccount(CreditAndDebitRequest creditAndDebitRequest);
     BankResponse transfer(TransferRequest transferRequest);
-    BankResponse login(LoginDto loginDto);
+
+    User getUserByEmail(String email);
 }

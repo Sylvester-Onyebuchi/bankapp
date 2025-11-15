@@ -1,4 +1,4 @@
-FROM maven:3.9.9-eclipse-temurin-21 AS BUILDER
+FROM maven:3.9.9-eclipse-temurin-21 AS builder
 
 WORKDIR /app
 
@@ -13,7 +13,5 @@ FROM eclipse-temurin:21-jdk AS runner
 WORKDIR /app
 COPY --from=builder /app/target/bank.jar app.jar
 
-
-EXPOSE 8008
-
+EXPOSE 8090
 ENTRYPOINT ["java", "-jar", "app.jar"]

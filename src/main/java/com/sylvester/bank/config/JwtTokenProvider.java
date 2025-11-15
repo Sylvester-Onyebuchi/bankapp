@@ -9,8 +9,10 @@ import io.jsonwebtoken.security.Keys;
 import io.jsonwebtoken.security.SecurityException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 
+import javax.crypto.SecretKey;
 import java.security.Key;
 import java.security.SecureRandom;
 import java.util.Base64;
@@ -19,53 +21,41 @@ import java.util.Date;
 @Component
 public class JwtTokenProvider {
 
-    private static String generateKey() {
-        int byteLength = 260 / 8; // Convert bits to bytes
-        byte[] key = new byte[byteLength];
-        new SecureRandom().nextBytes(key);
-        return Base64.getEncoder().encodeToString(key);
-    }
 
-    private final String jwtSecret = generateKey();
-    @Value("${app.jwt.jwtExpirationDate}")
-    private long jwtExpirationDate;
+   @Value("${spring.app.jwtScret}")
+    private String jwtSecret;
 
-    public String generateToken(Authentication authentication) {
-        String username = authentication.getName();
-        Date currentDate = new Date();
-        Date expiredDate = new Date(currentDate.getTime() + jwtExpirationDate);
 
+    public String generateToken(UserDetails userDetails) {
+        String username = userDetails.getUsername();
         return Jwts.builder()
-                .setSubject(username)
-                .setIssuedAt(currentDate)
-                .setExpiration(expiredDate)
-                .signWith(Key())
+                .subject(username)
+                .signWith(getKey())
+                .issuedAt(new Date())
+                .expiration(new Date(System.currentTimeMillis() + 3600_000))
                 .compact();
     }
 
-    private Key Key(){
-        byte[] bytes = Decoders.BASE64.decode(jwtSecret);
-        return Keys.hmacShaKeyFor(bytes);
+    private Key getKey(){
+        return Keys.hmacShaKeyFor(Decoders.BASE64.decode(jwtSecret));
     }
 
     public String getUsername(String token) {
-        Claims claims = Jwts.parserBuilder()
-                .setSigningKey(Key()) // Ensure this returns a valid Key object
-                .build()
-                .parseClaimsJws(token)
-                .getBody();
-        return claims.getSubject();
+       return Jwts.parser()
+               .verifyWith((SecretKey) getKey())
+               .build()
+               .parseSignedClaims(token)
+               .getPayload()
+               .getSubject();
     }
 
     public boolean validateToken(String token) {
         try {
-            return Jwts.parserBuilder()
-                    .setSigningKey(Key())
-                    .build()
-                    .parseClaimsJws(token)
-                    .getBody()
-                    .getExpiration()
-                    .before(new Date());
+             Jwts.parser()
+                     .verifyWith((SecretKey) getKey())
+                     .build()
+                     .parseSignedClaims(token);
+             return true;
         } catch (ExpiredJwtException e) {
             throw new RuntimeException("Token has expired", e);
         } catch (MalformedJwtException e) {

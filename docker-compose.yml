@@ -5,26 +5,23 @@ services:
     env_file:
       - .env
     ports:
-      - "8008:8008"
+      - "8090:8090"
     depends_on:
-      - mysql
+     - postgres
     networks:
       bank-net:
-
-
-  mysql:
-    image: mysql
-    container_name: bank-mysql
+  postgres:
+    image: postgres
+    container_name: bank-pg
     restart: always
     env_file:
       - .env
     networks:
       bank-net:
     ports:
-      - "3307:3306"
+      - "5431:5432"
     volumes:
-      - bank_data:/var/lib/mysql
-
+      - bank_data:/var/lib/postgresql/data
   pgadmin:
     container_name: bank_pgadmin
     image: dpage/pgadmin4
@@ -32,15 +29,13 @@ services:
       - "7001:80"
     restart: always
     depends_on:
-      - mysql
+      - postgres
     env_file:
       - .env
     volumes:
       - bank_pgadmin_data:/var/lib/pgadmin
     networks:
       bank-net:
-
-
 
 networks:
   bank-net:
